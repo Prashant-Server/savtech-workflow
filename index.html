@@ -855,6 +855,19 @@ function openAddPO(id){
       <input id="po-dur-oth" placeholder="e.g. 18 Months" style="margin-top:5px;display:${po?.duration&&!['6 Months','1 Year','2 Years','3 Years',''].includes(po.duration)?'block':'none'}" value="${po?.duration&&!['6 Months','1 Year','2 Years','3 Years',''].includes(po.duration)?po.duration:''}">
     </div>
     <div class="form-group"><label>Equipment Qty (Total)</label><input id="po-eqqty" type="number" placeholder="e.g. 120" value="${po?.eqQty||''}"></div>
+    <div class="form-group"><label>Visit Cycle</label><select id="po-vcycle">
+      <option value="" ${!po?.visitCycle?'selected':''}>— Select —</option>
+      <option ${po?.visitCycle==='Quarterly'?'selected':''}>Quarterly</option>
+      <option ${po?.visitCycle==='Half Yearly'?'selected':''}>Half Yearly</option>
+    </select></div>
+    <div class="form-group"><label>Equipment Type</label><select id="po-eqtype">
+      <option value="" ${!po?.equipmentType?'selected':''}>— Select —</option>
+      <option ${po?.equipmentType==='ROSOV'?'selected':''}>ROSOV</option>
+      <option ${po?.equipmentType==='MOV'?'selected':''}>MOV</option>
+      <option ${po?.equipmentType==='DBBV'?'selected':''}>DBBV</option>
+    </select></div>
+    <div class="form-group"><label>Release Order Qty</label><input id="po-roqty" type="number" placeholder="e.g. 30" value="${po?.releaseOrderQty||''}"></div>
+    <div class="form-group"><label>Release Order Rate (₹)</label><input id="po-rorate" type="number" placeholder="e.g. 5000" value="${po?.releaseOrderRate||''}"></div>
     <div class="form-group"><label>Next Visit Due Date</label><input id="po-nextdue" type="date" value="${po?.nextVisitDue||''}"></div>
     <div class="form-group"><label>Visit Status</label>
       <select id="po-vstatus" onchange="soChg('po-vstatus')">
@@ -901,6 +914,10 @@ function savePO(id){
     validTo:document.getElementById('po-to').value,
     duration:soVal('po-dur'),
     eqQty:document.getElementById('po-eqqty').value,
+    visitCycle:document.getElementById('po-vcycle').value,
+    equipmentType:document.getElementById('po-eqtype').value,
+    releaseOrderQty:document.getElementById('po-roqty').value,
+    releaseOrderRate:document.getElementById('po-rorate').value,
     nextVisitDue:document.getElementById('po-nextdue').value,
     visitStatus:soVal('po-vstatus'),
     scope:document.getElementById('po-scope').value.trim()
@@ -928,6 +945,10 @@ function viewPO(id){
       <div class="form-group"><label>Valid</label><div>${fmt(po.validFrom)} – ${fmt(po.validTo)}</div></div>
       ${po.duration?`<div class="form-group"><label>Duration</label><div>${po.duration}</div></div>`:''}
       ${po.eqQty?`<div class="form-group"><label>Equipment Qty</label><div class="bold">${po.eqQty} Nos</div></div>`:''}
+      ${po.visitCycle?`<div class="form-group"><label>Visit Cycle</label><div>${po.visitCycle}</div></div>`:''}
+      ${po.equipmentType?`<div class="form-group"><label>Equipment Type</label><div>${po.equipmentType}</div></div>`:''}
+      ${po.releaseOrderQty?`<div class="form-group"><label>Release Order Qty</label><div class="bold">${po.releaseOrderQty} Nos</div></div>`:''}
+      ${po.releaseOrderRate?`<div class="form-group"><label>Release Order Rate</label><div class="bold">${fmtMoney(po.releaseOrderRate)}</div></div>`:''}
       ${po.nextVisitDue?`<div class="form-group"><label>Next Visit Due</label><div class="bold txt-warn">${fmt(po.nextVisitDue)}</div></div>`:''}
       ${po.visitStatus?`<div class="form-group"><label>Visit Status</label><span class="badge badge-${['Completed'].includes(po.visitStatus)?'active':'pending'}">${po.visitStatus}</span></div>`:''}
     </div>
@@ -1052,6 +1073,10 @@ function openAddVisit(id,poId){
       </select>
     </div>
     <div class="form-group"><label>Location / Terminal</label><input id="v-loc" value="${v?.location||''}"></div>
+    <div class="form-group"><label>State</label><select id="v-state">
+      <option value="">— Select —</option>
+      ${['Andhra Pradesh','Bihar','Chhattisgarh','Delhi','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Odisha','Punjab','Rajasthan','Tamil Nadu','Telangana','Uttar Pradesh','Uttarakhand','West Bengal','Others'].map(s=>`<option ${v?.state===s?'selected':''}>${s}</option>`).join('')}
+    </select></div>
     <div class="form-group"><label>Visit Date *</label><input id="v-date" type="date" value="${v?.visitDate||today()}"></div>
     <div class="form-group"><label>Linked PO</label><select id="v-po">
       <option value="">— None —</option>
@@ -1120,6 +1145,7 @@ function saveVisit(id){
   }
   const v={id:id||uid(),visitNo:document.getElementById('v-no').value.trim(),
     customer:custVal,location:document.getElementById('v-loc').value.trim(),
+    state:document.getElementById('v-state').value,
     visitDate:document.getElementById('v-date').value,poId:document.getElementById('v-po').value,
     contractType:document.getElementById('v-ctype').value,
     engineerId:document.getElementById('v-eng').value,status:document.getElementById('v-status').value,
@@ -1179,6 +1205,7 @@ function viewVisit(id){
     <div class="form-grid">
       <div class="form-group"><label>Customer</label><div class="bold">${v.customer}</div></div>
       <div class="form-group"><label>Location</label><div>${v.location||'-'}</div></div>
+      ${v.state?`<div class="form-group"><label>State</label><div>${v.state}</div></div>`:''}
       <div class="form-group"><label>Visit Date</label><div>${fmt(v.visitDate)}</div></div>
       <div class="form-group"><label>Status</label><span class="badge badge-${v.status==='Completed'?'active':v.status==='In Progress'?'checkedin':'pending'}">${v.status}</span></div>
       <div class="form-group"><label>Engineer</label><div class="bold">${eng?eng.name:'<span class="txt-warn">Unassigned</span>'}</div></div>
@@ -1316,6 +1343,7 @@ function openAddReport(visitId){
       <div class="form-group"><label>PO Date</label><input id="r-podate" type="date" value=""></div>
       <div class="form-group"><label>Vendor Code</label><input id="r-vcode" value="" placeholder="e.g. 148749"></div>
       <div class="form-group"><label>Release Order No</label><input id="r-rono" value=""></div>
+      <div class="form-group"><label>Client Order Number</label><input id="r-clientorderno" value="" placeholder="e.g. 4500012345"></div>
       <div class="form-group full"><label>Subject / Visit Purpose</label>
         <select id="r-subj" onchange="document.getElementById('r-subj-other').style.display=this.value==='Others'?'block':'none'">
           ${SUBJECT_OPTS.map(s=>`<option>${s}</option>`).join('')}
@@ -1615,6 +1643,7 @@ function saveReport(editId){
     poDate:document.getElementById('r-podate').value,
     vendorCode:document.getElementById('r-vcode').value.trim(),
     releaseOrderNo:document.getElementById('r-rono').value.trim(),
+    clientOrderNo:document.getElementById('r-clientorderno').value.trim(),
     subject:(subjEl.value==='Others'?document.getElementById('r-subj-other').value.trim():subjEl.value.trim()),
     poDuration:soVal('r-duration'),
     poEqQty:soVal('r-eqqty'),
@@ -1748,13 +1777,17 @@ function _autoCreateFinanceDocs(reportId, db){
       existInv.notes=amcType+' - Consumed spares from Report '+report.reportNo;
       existInv.updatedAt=new Date().toISOString();
     } else if(!existInv){
+      const _vState=visit?.state||'';
+      const _isH=_vState.toLowerCase().includes('haryana');
       const autoInv={
         id:uid(), reportId:reportId, quotationId:'',
         invoiceNo:'INV-AUTO-'+report.reportNo,
         invoiceDate:today(),
         dueDate:new Date(Date.now()+15*864e5).toISOString().slice(0,10),
         orderNo:poRef,
-        countryOfSupply:'India', placeOfSupply:'',
+        clientOrderNo:report.site?.clientOrderNo||'',
+        countryOfSupply:'India', placeOfSupply:_vState,
+        gstType:_isH?'cgst_sgst':'igst',
         customer:customer, site:siteLoc,
         contactPerson:contactPerson, designation:'',
         clientPhone:'', clientEmail:clientEmail, clientGstin:'', clientPan:'',
@@ -1772,6 +1805,56 @@ function _autoCreateFinanceDocs(reportId, db){
   } else if(existInv && existInv.status==='draft'){
     // All consumed spares removed from report → remove the draft invoice
     db.invoices=db.invoices.filter(inv=>inv.id!==existInv.id);
+  }
+
+  // ── 3. AMC SERVICE INVOICE → Auto-create on report submission ──
+  const visitState=visit?.state||'';
+  const isHaryana=visitState.toLowerCase().includes('haryana');
+  const existAmcInv=db.invoices.find(inv=>inv.reportId===reportId && inv.autoSource==='amc_service');
+  // Build AMC items from equipment in report
+  const amcItems=report.equipment.map((eq,i)=>({
+    id:uid(), description:'AMC Service - '+(eq.actuatorType||'Equipment')+' ('+amcType+') — '+(eq.tankNo||'Unit '+(i+1)),
+    hsn:'998719', qty:1, unit:'Nos', unitPrice:'', amount:0,
+    gstRate:18, gstAmount:0, totalWithGst:0
+  }));
+  if(amcItems.length){
+    if(existAmcInv && existAmcInv.status==='draft'){
+      existAmcInv.items=amcItems;
+      existAmcInv.customer=customer; existAmcInv.site=siteLoc;
+      existAmcInv.contactPerson=contactPerson; existAmcInv.clientEmail=clientEmail;
+      existAmcInv.vendorCode=vendorCode; existAmcInv.orderNo=poRef;
+      existAmcInv.clientOrderNo=report.site?.clientOrderNo||'';
+      existAmcInv.amcType=amcType; existAmcInv.subtotal=0;
+      existAmcInv.totalGst=0; existAmcInv.grandTotal=0;
+      existAmcInv.placeOfSupply=visitState;
+      existAmcInv.gstType=isHaryana?'cgst_sgst':'igst';
+      existAmcInv.notes=amcType+' Service charges from Report '+report.reportNo;
+      existAmcInv.updatedAt=new Date().toISOString();
+    } else if(!existAmcInv){
+      const amcInv={
+        id:uid(), reportId:reportId, quotationId:'',
+        invoiceNo:'INV-AMC-'+report.reportNo,
+        invoiceDate:today(),
+        dueDate:new Date(Date.now()+15*864e5).toISOString().slice(0,10),
+        orderNo:poRef,
+        clientOrderNo:report.site?.clientOrderNo||'',
+        countryOfSupply:'India', placeOfSupply:visitState,
+        gstType:isHaryana?'cgst_sgst':'igst',
+        customer:customer, site:siteLoc,
+        contactPerson:contactPerson, designation:'',
+        clientPhone:'', clientEmail:clientEmail, clientGstin:'', clientPan:'',
+        vendorCode:vendorCode,
+        paymentTerms:'30 days from invoice date',
+        items:amcItems, subtotal:0, totalGst:0, grandTotal:0,
+        notes:amcType+' Service charges from Report '+report.reportNo,
+        status:'draft', autoGenerated:true,
+        autoSource:'amc_service', amcType:amcType,
+        createdAt:new Date().toISOString()
+      };
+      db.invoices.push(amcInv);
+    }
+  } else if(existAmcInv && existAmcInv.status==='draft'){
+    db.invoices=db.invoices.filter(inv=>inv.id!==existAmcInv.id);
   }
 }
 
@@ -1808,6 +1891,7 @@ function viewR(id){
       <div class="form-group"><label>PO Date</label><div>${r.site?.poDate?fmt(r.site.poDate):'-'}</div></div>
       <div class="form-group"><label>Vendor Code</label><div>${r.site?.vendorCode||'-'}</div></div>
       <div class="form-group"><label>Release Order No</label><div>${r.site?.releaseOrderNo||'-'}</div></div>
+      ${r.site?.clientOrderNo?`<div class="form-group"><label>Client Order Number</label><div>${r.site.clientOrderNo}</div></div>`:''}
       <div class="form-group full"><label>Subject</label><div>${r.site?.subject||'-'}</div></div>
     </div>
     <div class="sep"></div>
@@ -1831,7 +1915,7 @@ function viewR(id){
     <button class="btn btn-r btn-sm" onclick="exportR('${r.id}','pdf')">🖨️ PDF Print</button>
     ${CU.role==='admin'||CU.role==='site_incharge'||CU.role==='engineer'?`<button class="btn btn-s btn-sm" onclick="CM();openEditReport('${r.id}')">✏️ Edit</button>`:''}
     ${!q&&(CU.role==='admin'||CU.role==='finance')?`<button class="btn btn-p" onclick="CM();genQ('${r.id}')">Generate Quotation</button>`:''}
-    ${q?`<button class="btn btn-g" onclick="CM();viewQ('${q.id}')">View Quotation</button>`:''}
+    ${q&&CU.role!=='engineer'?`<button class="btn btn-g" onclick="CM();viewQ('${q.id}')">View Quotation</button>`:''}
   </div>`,'wide');
 }
 
@@ -1870,6 +1954,7 @@ function openEditReport(id){
       <div class="form-group"><label>PO Date</label><input id="r-podate" type="date" value="${s.poDate||''}"></div>
       <div class="form-group"><label>Vendor Code</label><input id="r-vcode" value="${s.vendorCode||''}"></div>
       <div class="form-group"><label>Release Order No</label><input id="r-rono" value="${s.releaseOrderNo||''}"></div>
+      <div class="form-group"><label>Client Order Number</label><input id="r-clientorderno" value="${s.clientOrderNo||''}"></div>
       <div class="form-group full"><label>Subject / Visit Purpose</label>
         <select id="r-subj" onchange="document.getElementById('r-subj-other').style.display=this.value==='Others'?'block':'none'">
           ${SUBJECT_OPTS.map(o=>`<option ${s.subject===o?'selected':''}>${o}</option>`).join('')}
@@ -2728,12 +2813,19 @@ function saveAutoInv(invId){
   const subtotal=items.reduce((s,it)=>s+it.amount,0);
   const totalGst=items.reduce((s,it)=>s+it.gstAmount,0);
   const grandTotal=subtotal+totalGst;
+  const _place=document.getElementById('inv-place').value.trim();
+  const _isHaryana=_place.toLowerCase().includes('haryana');
+  const _gstType=_isHaryana?'cgst_sgst':'igst';
+  const _cgst=_isHaryana?subtotal*0.09:0;
+  const _sgst=_isHaryana?subtotal*0.09:0;
+  const _igst=_isHaryana?0:subtotal*0.18;
+  const _totalWithGst=subtotal+(_isHaryana?_cgst+_sgst:_igst);
   db.invoices[idx]={...db.invoices[idx],
     invoiceNo:no, invoiceDate:document.getElementById('inv-date').value,
     dueDate:document.getElementById('inv-due').value,
     orderNo:document.getElementById('inv-order').value.trim(),
     countryOfSupply:document.getElementById('inv-country').value.trim(),
-    placeOfSupply:document.getElementById('inv-place').value.trim(),
+    placeOfSupply:_place,
     customer:document.getElementById('inv-cust').value.trim(),
     site:document.getElementById('inv-site').value.trim(),
     contactPerson:document.getElementById('inv-contact').value.trim(),
@@ -2745,6 +2837,8 @@ function saveAutoInv(invId){
     vendorCode:document.getElementById('inv-vcode').value.trim(),
     paymentTerms:document.getElementById('inv-pay').value.trim(),
     items,subtotal,totalGst,grandTotal,
+    gstType:_gstType,cgst:_cgst,sgst:_sgst,igst:_igst,totalWithGst:_totalWithGst,
+    gstAmount:totalGst,
     notes:document.getElementById('inv-notes').value.trim(),
     status:'pending', updatedAt:new Date().toISOString()
   };
@@ -2861,7 +2955,8 @@ function updateInvoice(id){
   inv.dueDate=document.getElementById('inv-due').value;
   inv.orderNo=document.getElementById('inv-order').value.trim();
   inv.countryOfSupply=document.getElementById('inv-country').value.trim();
-  inv.placeOfSupply=document.getElementById('inv-place').value.trim();
+  const _up=document.getElementById('inv-place').value.trim();
+  inv.placeOfSupply=_up;
   inv.customer=document.getElementById('inv-cust').value.trim();
   inv.site=document.getElementById('inv-site').value.trim();
   inv.contactPerson=document.getElementById('inv-contact').value.trim();
@@ -2874,6 +2969,10 @@ function updateInvoice(id){
   inv.paymentTerms=document.getElementById('inv-pay').value.trim();
   inv.notes=document.getElementById('inv-notes').value.trim();
   inv.items=items;inv.subtotal=subtotal;inv.totalGst=totalGst;inv.grandTotal=grandTotal;
+  const _uH=_up.toLowerCase().includes('haryana');
+  inv.gstType=_uH?'cgst_sgst':'igst';
+  inv.cgst=_uH?subtotal*0.09:0;inv.sgst=_uH?subtotal*0.09:0;inv.igst=_uH?0:subtotal*0.18;
+  inv.totalWithGst=subtotal+(_uH?inv.cgst+inv.sgst:inv.igst);inv.gstAmount=totalGst;
   inv.updatedAt=new Date().toISOString();
   sDB(db);CM();viewInv(id);
 }
@@ -2971,13 +3070,18 @@ function saveInvoice(quotId){
   const subtotal=items.reduce((s,it)=>s+it.amount,0);
   const totalGst=items.reduce((s,it)=>s+it.gstAmount,0);
   const grandTotal=subtotal+totalGst;
+  const _plc=document.getElementById('inv-place').value.trim();
+  const _isH=_plc.toLowerCase().includes('haryana');
+  const _gT=_isH?'cgst_sgst':'igst';
+  const _cg=_isH?subtotal*0.09:0;const _sg=_isH?subtotal*0.09:0;const _ig=_isH?0:subtotal*0.18;
+  const _twg=subtotal+(_isH?_cg+_sg:_ig);
   const inv={id:uid(),quotationId:quotId,invoiceNo:no,
     invoiceDate:document.getElementById('inv-date').value,
     dueDate:document.getElementById('inv-due').value,
     orderNo:document.getElementById('inv-order').value.trim(),
     countryOfSupply:document.getElementById('inv-country').value.trim(),
-    placeOfSupply:document.getElementById('inv-place').value.trim(),
-    customer:document.getElementById('inv-cust').value.trim()||q.customer,
+    placeOfSupply:_plc,
+    customer:document.getElementById('inv-cust').value.trim()||(q?q.customer:''),
     site:document.getElementById('inv-site').value.trim(),
     contactPerson:document.getElementById('inv-contact').value.trim(),
     designation:document.getElementById('inv-desig').value.trim(),
@@ -2988,6 +3092,7 @@ function saveInvoice(quotId){
     vendorCode:document.getElementById('inv-vcode').value.trim(),
     paymentTerms:document.getElementById('inv-pay').value.trim(),
     items,subtotal,totalGst,grandTotal,
+    gstType:_gT,cgst:_cg,sgst:_sg,igst:_ig,totalWithGst:_twg,gstAmount:totalGst,
     notes:document.getElementById('inv-notes').value.trim(),
     status:'pending',createdAt:new Date().toISOString()};
   if(q)q.status='invoiced';
@@ -3039,7 +3144,10 @@ function viewInv(id){
     <div class="tbl-wrap"><table>
       <tr><th>#</th><th>Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr>
       ${inv.items.map((it,i)=>`<tr><td>${i+1}</td><td>${it.description||it.modelNo||'-'}</td><td>${it.qty}</td><td style="text-align:right">${fmtMoney(it.unitPrice)}</td><td style="text-align:right;font-weight:600">${fmtMoney(it.amount)}</td></tr>`).join('')}
-      <tr><td colspan="4" style="text-align:right;font-weight:600">GST @18%</td><td style="text-align:right">${fmtMoney(inv.gstAmount)}</td></tr>
+      ${inv.gstType==='cgst_sgst'?`
+      <tr><td colspan="4" style="text-align:right;font-weight:600">CGST @9%</td><td style="text-align:right">${fmtMoney(inv.cgst||inv.subtotal*0.09)}</td></tr>
+      <tr><td colspan="4" style="text-align:right;font-weight:600">SGST @9%</td><td style="text-align:right">${fmtMoney(inv.sgst||inv.subtotal*0.09)}</td></tr>`
+      :`<tr><td colspan="4" style="text-align:right;font-weight:600">IGST @18%</td><td style="text-align:right">${fmtMoney(inv.igst||inv.gstAmount||inv.subtotal*0.18)}</td></tr>`}
       <tr><td colspan="4" style="text-align:right;font-weight:700;font-size:15px">Total</td><td style="text-align:right;font-weight:700;font-size:15px">${fmtMoney(inv.totalWithGst)}</td></tr>
     </table></div>
     ${pays.length?`<div class="sep"></div><div class="bold mb-8">Payment History</div><div class="tbl-wrap"><table>
