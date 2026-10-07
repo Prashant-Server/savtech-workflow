@@ -1458,9 +1458,9 @@ function onRVisitChange(){
 function renderREquipTable(){
   const wrap=document.getElementById('r-eq-wrap');if(!wrap)return;
   wrap.innerHTML=`<table class="eq-table"><colgroup>
-    <col style="width:36px"><col style="width:90px"><col style="width:110px"><col style="width:130px"><col style="width:110px"><col style="width:170px"><col style="width:110px"><col style="width:160px"><col style="width:90px"><col style="width:200px"><col style="width:200px"><col style="width:130px"><col style="width:36px">
+    <col style="width:36px"><col style="width:90px"><col style="width:110px"><col style="width:130px"><col style="width:110px"><col style="width:170px"><col style="width:110px"><col style="width:80px"><col style="width:80px"><col style="width:160px"><col style="width:90px"><col style="width:200px"><col style="width:200px"><col style="width:130px"><col style="width:36px">
   </colgroup><tr>
-    <th style="text-align:center">#</th><th>Tank No</th><th>Pipeline</th><th>Actuator Type</th><th>Make</th><th>Model No</th><th>Serial No</th><th>Findings</th><th>Health</th><th>🔧 Consumed Spares</th><th>📦 Rec. Spares</th><th>Remarks</th><th></th>
+    <th style="text-align:center">#</th><th>Tank No</th><th>Pipeline</th><th>Actuator Type</th><th>Make</th><th>Model No</th><th>Serial No</th><th>RO Qty</th><th>RO Rate (₹)</th><th>Findings</th><th>Health</th><th>🔧 Consumed Spares</th><th>📦 Rec. Spares</th><th>Remarks</th><th></th>
   </tr>${_rEqList.map((eq,i)=>{
     const mdlOpts=(ATYPE_MODELS[eq.actuatorType]||[]).map(m=>`<option value="${m}">`).join('');
     return`<tr>
@@ -1479,6 +1479,8 @@ function renderREquipTable(){
     <td><input id="r-mdl-${i}" list="r-mdl-dl-${i}" value="${eq.modelNo}" placeholder="Type or select..." onchange="_rEqList[${i}].modelNo=this.value">
       <datalist id="r-mdl-dl-${i}">${mdlOpts}<option value="Others"></datalist></td>
     <td><input value="${eq.serialNo}" onchange="_rEqList[${i}].serialNo=this.value"></td>
+    <td><input type="number" value="${eq.releaseOrderQty||''}" placeholder="Qty" style="width:70px" onchange="_rEqList[${i}].releaseOrderQty=this.value"></td>
+    <td><input type="number" value="${eq.releaseOrderRate||''}" placeholder="Rate" style="width:70px" onchange="_rEqList[${i}].releaseOrderRate=this.value"></td>
     <td><textarea rows="3" onchange="_rEqList[${i}].findings=this.value">${eq.findings}</textarea></td>
     <td><select onchange="_rEqList[${i}].health=this.value">${HEALTH_OPTS.map(o=>`<option ${eq.health===o?'selected':''}>${o}</option>`).join('')}</select></td>
     <td>${_spCell(i,'c')}</td>
@@ -1619,7 +1621,7 @@ function rEqMake(i,val){
   var mi=document.getElementById('r-make-oth-'+i);
   if(mi)mi.style.display=val==='Others'?'block':'none';
 }
-function addREquip(){_rEqList.push({id:uid(),srNo:_rEqList.length+1,tankNo:'',productLine:'INLET',actuatorType:'EH ROSOV',actuatorMake:'Rotork',modelNo:'',serialNo:'',findings:'',health:'Good',consumedSpares:'',recommendedSpares:'',consumedSparesList:[],recommendedSparesList:[],remarks:'',actuatorTypeOther:'',actuatorMakeOther:''});renderREquipTable();}
+function addREquip(){_rEqList.push({id:uid(),srNo:_rEqList.length+1,tankNo:'',productLine:'INLET',actuatorType:'EH ROSOV',actuatorMake:'Rotork',modelNo:'',serialNo:'',releaseOrderQty:'',releaseOrderRate:'',findings:'',health:'Good',consumedSpares:'',recommendedSpares:'',consumedSparesList:[],recommendedSparesList:[],remarks:'',actuatorTypeOther:'',actuatorMakeOther:''});renderREquipTable();}
 function removeREquip(i){if(_rEqList.length<=1){alert('At least one row required');return;}_rEqList.splice(i,1);renderREquipTable();}
 function updateModelSuggestions(i){var dl=document.getElementById('r-mdl-dl-'+i);var type=_rEqList[i].actuatorType;if(dl)dl.innerHTML=(ATYPE_MODELS[type]||[]).map(function(m){return'<option value="'+m+'">';}).join('')+'<option value="Others">';}
 
@@ -1786,6 +1788,7 @@ function _autoCreateFinanceDocs(reportId, db){
         dueDate:new Date(Date.now()+15*864e5).toISOString().slice(0,10),
         orderNo:poRef,
         clientOrderNo:report.site?.clientOrderNo||'',
+        releaseOrderNo:report.site?.releaseOrderNo||'',
         countryOfSupply:'India', placeOfSupply:_vState,
         gstType:_isH?'cgst_sgst':'igst',
         customer:customer, site:siteLoc,
@@ -1838,6 +1841,7 @@ function _autoCreateFinanceDocs(reportId, db){
         dueDate:new Date(Date.now()+15*864e5).toISOString().slice(0,10),
         orderNo:poRef,
         clientOrderNo:report.site?.clientOrderNo||'',
+        releaseOrderNo:report.site?.releaseOrderNo||'',
         countryOfSupply:'India', placeOfSupply:visitState,
         gstType:isHaryana?'cgst_sgst':'igst',
         customer:customer, site:siteLoc,
@@ -1864,7 +1868,7 @@ function viewR(id){
   const eqRows=r.equipment.map(eq=>`<tr>
     <td>${eq.srNo}</td><td>${eq.tankNo||'-'}</td><td>${eq.productLine||'-'}</td>
     <td>${eq.actuatorType||'-'}</td><td>${eq.actuatorMake||'-'}</td><td>${eq.modelNo||'-'}</td>
-    <td>${eq.serialNo||'-'}</td><td>${eq.findings||'-'}</td>
+    <td>${eq.serialNo||'-'}</td><td>${eq.releaseOrderQty||'-'}</td><td>${eq.releaseOrderRate?fmtMoney(eq.releaseOrderRate):'-'}</td><td>${eq.findings||'-'}</td>
     <td><span class="badge ${eq.health==='Good'?'badge-active':eq.health==='Poor'||eq.health==='Critical'?'badge-overdue':'badge-pending'}">${eq.health}</span></td>
     <td>${eq.consumedSpares||'-'}</td><td>${eq.recommendedSpares||'-'}</td><td>${eq.remarks||'-'}</td>
   </tr>`).join('');
@@ -1897,7 +1901,7 @@ function viewR(id){
     <div class="sep"></div>
     <div class="bold mb-8">Equipment (${r.equipment.length} units)</div>
     <div class="tbl-wrap"><table style="min-width:1200px">
-      <tr><th>#</th><th>Tank</th><th>Pipeline</th><th>Type</th><th>Make</th><th>Model</th><th>S/N</th><th>Findings</th><th>Health</th><th>Consumed</th><th>Recommended</th><th>Remarks</th></tr>
+      <tr><th>#</th><th>Tank</th><th>Pipeline</th><th>Type</th><th>Make</th><th>Model</th><th>S/N</th><th>RO Qty</th><th>RO Rate</th><th>Findings</th><th>Health</th><th>Consumed</th><th>Recommended</th><th>Remarks</th></tr>
       ${eqRows}
     </table></div>
     ${conList.length?`<div class="sep"></div><div class="bold mb-8">🔧 Consumed Spares</div><div class="tbl-wrap"><table>
@@ -2080,6 +2084,8 @@ function genReportDoc(id){
       '<td>'+(eq.actuatorMake==='Others'?(eq.actuatorMakeOther||eq.actuatorMake):eq.actuatorMake||'-')+'</td>'+
       '<td style="font-family:monospace;font-size:10px">'+(eq.modelNo||'-')+'</td>'+
       '<td>'+(eq.serialNo||'-')+'</td>'+
+      '<td>'+(eq.releaseOrderQty||'-')+'</td>'+
+      '<td>'+(eq.releaseOrderRate?fmtMoney(eq.releaseOrderRate):'-')+'</td>'+
       '<td>'+(eq.findings||'-')+'</td>'+
       '<td><span class="badge '+(healthMap[eq.health]||'b-fair')+'">'+(eq.health||'-')+'</span></td>'+
       '<td>'+(eq.consumedSpares||'-')+'</td>'+
@@ -2150,7 +2156,7 @@ function genReportDoc(id){
     summaryBar+
     '<div class="sec-title">Equipment Inspection Details</div>'+
     '<div style="overflow-x:auto"><table>'+
-      '<tr><th>#</th><th>Tank No.</th><th>Pipeline</th><th>Type</th><th>Make</th><th>Model No.</th><th>Serial No.</th><th>Findings</th><th>Health</th><th>Consumed Spares</th><th>Recommended Spares</th><th>Remarks</th></tr>'+
+      '<tr><th>#</th><th>Tank No.</th><th>Pipeline</th><th>Type</th><th>Make</th><th>Model No.</th><th>Serial No.</th><th>RO Qty</th><th>RO Rate</th><th>Findings</th><th>Health</th><th>Consumed Spares</th><th>Recommended Spares</th><th>Remarks</th></tr>'+
       eqRows+
     '</table></div>'+
     (conList.length?'<div class="sec-title">Consumed Spares Summary</div><table><tr><th>Tank No.</th><th>Actuator Type</th><th>Model No.</th><th>Spares Consumed</th></tr>'+conList.map(function(eq){return'<tr><td><strong>'+eq.tankNo+'</strong></td><td>'+eq.actuatorType+'</td><td>'+eq.modelNo+'</td><td>'+eq.consumedSpares+'</td></tr>';}).join('')+'</table>':'')+
@@ -2769,6 +2775,7 @@ function editAutoInv(invId){
       <div class="form-group"><label>Invoice Date</label><input id="inv-date" type="date" value="${inv.invoiceDate||today()}"></div>
       <div class="form-group"><label>Due Date</label><input id="inv-due" type="date" value="${inv.dueDate||new Date(Date.now()+15*864e5).toISOString().slice(0,10)}"></div>
       <div class="form-group"><label>Client Order Number / PO Ref</label><input id="inv-order" value="${inv.orderNo||''}"></div>
+      <div class="form-group"><label>Release Order Number</label><input id="inv-rono" value="${inv.releaseOrderNo||''}"></div>
       <div class="form-group"><label>Country of Supply</label><input id="inv-country" value="${inv.countryOfSupply||'India'}"></div>
       <div class="form-group"><label>Place of Supply (State &amp; Code)</label><input id="inv-place" value="${inv.placeOfSupply||''}" placeholder="e.g. West Bengal (19)"></div>
     </div>
@@ -2824,6 +2831,7 @@ function saveAutoInv(invId){
     invoiceNo:no, invoiceDate:document.getElementById('inv-date').value,
     dueDate:document.getElementById('inv-due').value,
     orderNo:document.getElementById('inv-order').value.trim(),
+    releaseOrderNo:document.getElementById('inv-rono')?.value.trim()||'',
     countryOfSupply:document.getElementById('inv-country').value.trim(),
     placeOfSupply:_place,
     customer:document.getElementById('inv-cust').value.trim(),
@@ -2857,6 +2865,7 @@ function openBlankInv(){
       <div class="form-group"><label>Invoice Date</label><input id="inv-date" type="date" value="${today()}"></div>
       <div class="form-group"><label>Due Date</label><input id="inv-due" type="date" value="${new Date(Date.now()+15*864e5).toISOString().slice(0,10)}"></div>
       <div class="form-group"><label>Client Order Number / PO Ref</label><input id="inv-order" value=""></div>
+      <div class="form-group"><label>Release Order Number</label><input id="inv-rono" value=""></div>
       <div class="form-group"><label>Country of Supply</label><input id="inv-country" value="India"></div>
       <div class="form-group"><label>Place of Supply (State &amp; Code)</label><input id="inv-place" value="" placeholder="e.g. West Bengal (19)"></div>
     </div>
@@ -2906,6 +2915,7 @@ function editInvoice(id){
       <div class="form-group"><label>Invoice Date</label><input id="inv-date" type="date" value="${inv.invoiceDate||''}"></div>
       <div class="form-group"><label>Due Date</label><input id="inv-due" type="date" value="${inv.dueDate||''}"></div>
       <div class="form-group"><label>Client Order Number / PO Ref</label><input id="inv-order" value="${esc(inv.orderNo||'')}"></div>
+      <div class="form-group"><label>Release Order Number</label><input id="inv-rono" value="${esc(inv.releaseOrderNo||'')}"></div>
       <div class="form-group"><label>Country of Supply</label><input id="inv-country" value="${esc(inv.countryOfSupply||'India')}"></div>
       <div class="form-group"><label>Place of Supply</label><input id="inv-place" value="${esc(inv.placeOfSupply||'')}"></div>
     </div>
@@ -2954,6 +2964,7 @@ function updateInvoice(id){
   inv.invoiceDate=document.getElementById('inv-date').value;
   inv.dueDate=document.getElementById('inv-due').value;
   inv.orderNo=document.getElementById('inv-order').value.trim();
+  inv.releaseOrderNo=document.getElementById('inv-rono')?.value.trim()||'';
   inv.countryOfSupply=document.getElementById('inv-country').value.trim();
   const _up=document.getElementById('inv-place').value.trim();
   inv.placeOfSupply=_up;
@@ -2990,6 +3001,7 @@ function genInvoice(quotId){
       <div class="form-group"><label>Invoice Date</label><input id="inv-date" type="date" value="${today()}"></div>
       <div class="form-group"><label>Due Date</label><input id="inv-due" type="date" value="${new Date(Date.now()+15*864e5).toISOString().slice(0,10)}"></div>
       <div class="form-group"><label>Client Order Number / PO Ref</label><input id="inv-order" value="${q.orderNo||''}"></div>
+      <div class="form-group"><label>Release Order Number</label><input id="inv-rono" value="${q.releaseOrderNo||''}"></div>
       <div class="form-group"><label>Country of Supply</label><input id="inv-country" value="India"></div>
       <div class="form-group"><label>Place of Supply (State &amp; Code)</label><input id="inv-place" value="${q.placeOfSupply||''}" placeholder="e.g. West Bengal (19)"></div>
     </div>
@@ -3079,6 +3091,7 @@ function saveInvoice(quotId){
     invoiceDate:document.getElementById('inv-date').value,
     dueDate:document.getElementById('inv-due').value,
     orderNo:document.getElementById('inv-order').value.trim(),
+    releaseOrderNo:document.getElementById('inv-rono')?.value.trim()||'',
     countryOfSupply:document.getElementById('inv-country').value.trim(),
     placeOfSupply:_plc,
     customer:document.getElementById('inv-cust').value.trim()||(q?q.customer:''),
@@ -3131,6 +3144,8 @@ function viewInv(id){
       <div class="form-group"><label>Invoice Date</label><div>${fmt(inv.invoiceDate)}</div></div>
       <div class="form-group"><label>Due Date</label><div class="${bal>0&&inv.dueDate<today()?'txt-bad bold':''}">${fmt(inv.dueDate)}</div></div>
       <div class="form-group"><label>Total</label><div class="bold txt-good">${fmtMoney(inv.totalWithGst)}</div></div>
+      ${inv.orderNo?`<div class="form-group"><label>Client Order No</label><div>${inv.orderNo}</div></div>`:''}
+      ${inv.releaseOrderNo?`<div class="form-group"><label>Release Order No</label><div>${inv.releaseOrderNo}</div></div>`:''}
     </div>
     <div class="sep"></div>
     <div class="bold mb-8">Payment Progress</div>
@@ -3621,6 +3636,7 @@ function genInvDoc(id){
   +(inv.clientPan?'<div class="field-row"><b>PAN:</b> '+esc(inv.clientPan)+'</div>':'')
   +(inv.contactPerson?'<div class="field-row"><b>Attn:</b> '+esc(inv.contactPerson)+(inv.designation?' ('+esc(inv.designation)+')':'')+'</div>':'')
   +(inv.orderNo?'<div class="field-row"><b>Client Order Number:</b> '+esc(inv.orderNo)+(inv.invoiceDate?' Dated- '+_fmtD(inv.invoiceDate):'')+'</div>':'')
+  +(inv.releaseOrderNo?'<div class="field-row"><b>Release Order No:</b> '+esc(inv.releaseOrderNo)+'</div>':'')
   +'</div>'
   // Invoice Meta
   +'<div class="info-cell" style="border-right:none">'
