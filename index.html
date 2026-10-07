@@ -438,6 +438,7 @@ const PAGE_ICONS={dashboard:'🏠',purchase_orders:'📋',contracts:'📄',visit
 let CPage='dashboard';
 
 function navTo(p){
+  console.log('navTo called:', p);
   CPage=p;
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.page===p));
   renderPage();
@@ -1225,8 +1226,10 @@ function pgMyVisits(){
 
 // ===== CHECK-IN =====
 function pgCheckin(){
+  console.log('pgCheckin called');
   const db=rDB();
   const myV=db.visits.filter(v=>v.engineerId===CU.id&&v.status==='Scheduled');
+  console.log('Scheduled visits for checkin:', myV.length, myV.map(v=>v.visitNo));
   document.getElementById('content').innerHTML=`<div class="card">
     <div class="card-title">✅ Site Check-In</div>
     ${myV.length===0?'<div class="empty-state"><div class="ei">📍</div><p>No scheduled visits to check in</p></div>':
@@ -1242,8 +1245,10 @@ function pgCheckin(){
 }
 
 function doCheckin(vid){
+  console.log('doCheckin called with vid:', vid);
   const db=rDB();
   const selId=vid||document.getElementById('ci-visit')?.value;
+  console.log('selId:', selId);
   if(!selId){alert('Please select a visit');return;}
   const note=document.getElementById('ci-note')?.value||'';
   const gpsEl=document.getElementById('gps-status');
