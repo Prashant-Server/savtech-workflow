@@ -1213,7 +1213,7 @@ function pgMyVisits(){
       <td><span class="badge badge-${v.status==='Completed'?'active':v.status==='In Progress'?'checkedin':'pending'}">${v.status}</span></td>
       <td>${rpts.length}</td>
       <td>
-        <button class="btn btn-g btn-xs" onclick="doCheckin('${v.id}')">Check-In</button>
+        ${v.status==='Scheduled'?`<button class="btn btn-g btn-xs" id="ci-btn-${v.id}" onclick="doCheckin('${v.id}')">Check-In</button>`:''}
         <button class="btn btn-p btn-xs" onclick="CM();openAddReport('${v.id}')">+ Report</button>
       </td>
     </tr>`;
@@ -1246,14 +1246,17 @@ function doCheckin(vid){
   if(!selId){alert('Please select a visit');return;}
   const note=document.getElementById('ci-note')?.value||'';
   const gpsEl=document.getElementById('gps-status');
+  const inlineBtn=vid?document.getElementById('ci-btn-'+vid):null;
   if(gpsEl)gpsEl.innerHTML='📡 Getting GPS location...';
+  if(inlineBtn){inlineBtn.disabled=true;inlineBtn.textContent='📡 Checking in...';}
   const doSave=(lat,lng)=>{
     const db=rDB();
-    const v=db.visits.find(x=>x.id===selId);if(!v)return;
+    const v=db.visits.find(x=>x.id===selId);if(!v){if(inlineBtn){inlineBtn.disabled=false;inlineBtn.textContent='Check-In';}return;}
     v.checkIn={date:today(),time:new Date().toTimeString().slice(0,5),lat,lng,note};
     v.status='In Progress';
     sDB(db);
     if(gpsEl)gpsEl.innerHTML=`<strong class="txt-good">✅ Checked in!</strong><div class="gps-coords">${lat?`📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`:'Location not available'}</div>`;
+    if(inlineBtn)inlineBtn.textContent='✅ Checked in!';
     setTimeout(()=>navTo(CU.role==='engineer'?'my_visits':'visits'),1000);
   };
   if(navigator.geolocation){
