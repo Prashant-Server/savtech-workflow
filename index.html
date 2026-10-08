@@ -595,7 +595,7 @@ function pgDashboard(){
       <div class="stat-card"><div class="stat-num txt-warn">${stages.assigned+stages.in_progress}</div><div class="stat-lbl">Active Visits</div></div>
       <div class="stat-card"><div class="stat-num txt-warn">${stages.report_pending}</div><div class="stat-lbl">Reports Pending</div></div>
       <div class="stat-card"><div class="stat-num">${openPO}</div><div class="stat-lbl">Open POs</div></div>
-      <div class="stat-card"><div class="stat-num txt-good">${fmtMoney(totalReceived)}</div><div class="stat-lbl">Total Received</div></div>
+      ${CU.role!=='site_incharge'?`<div class="stat-card"><div class="stat-num txt-good">${fmtMoney(totalReceived)}</div><div class="stat-lbl">Total Received</div></div>`:''}
       <div class="stat-card"><div class="stat-num txt-good">${stages.paid}</div><div class="stat-lbl">Fully Paid</div></div>
     </div>`;
 
