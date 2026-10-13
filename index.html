@@ -1914,7 +1914,8 @@ function viewR(id){
   <div class="mfoot">
     <button class="btn btn-s" onclick="CM()">Close</button>
     <button class="btn btn-w btn-sm" onclick="exportR('${r.id}','word')">📄 Word</button>
-    <button class="btn btn-r btn-sm" onclick="exportR('${r.id}','pdf')">🖨️ PDF Print</button>
+    <button class="btn btn-r btn-sm" onclick="exportR('${r.id}','pdf','portrait')">🖨️ Portrait</button>
+    <button class="btn btn-r btn-sm" onclick="exportR('${r.id}','pdf','landscape')">🖨️ Landscape</button>
     ${CU.role==='admin'||CU.role==='site_incharge'||CU.role==='engineer'?`<button class="btn btn-s btn-sm" onclick="CM();openEditReport('${r.id}')">✏️ Edit</button>`:''}
     ${!q&&(CU.role==='admin'||CU.role==='finance')?`<button class="btn btn-p" onclick="CM();genQ('${r.id}')">Generate Quotation</button>`:''}
     ${q&&CU.role!=='engineer'?`<button class="btn btn-g" onclick="CM();viewQ('${q.id}')">View Quotation</button>`:''}
@@ -2291,21 +2292,26 @@ function genQuotDoc(id){
   '</div></body></html>';
 }
 
-function exportDoc(html, title, mode){
+function exportDoc(html, title, mode, orient){
   if(!html){alert('Document data not found.');return;}
+  // Inject orientation into @page CSS
+  if(orient==='landscape'){
+    html=html.replace(/@page\s*\{[^}]*\}/,'@page{size:A4 landscape;margin:10mm 12mm 10mm 12mm}');
+    // Also widen doc-wrap and page containers for landscape
+    html=html.replace(/\.doc-wrap\{max-width:\d+px/,'.doc-wrap{max-width:1100px');
+    html=html.replace(/\.page\{max-width:\d+px/,'.page{max-width:1100px');
+  }
   var w=window.open('','_blank');
   if(!w){alert('Pop-up block ho gaya. Browser mein pop-up allow karein aur dobara try karein.');return;}
   w.document.open();w.document.write(html);w.document.close();
   w.document.title=title;
   if(mode==='pdf'){
-    // slight delay to let images load, then print
     setTimeout(function(){try{w.print();}catch(e){}},800);
   }
-  // For word: user can File > Save As from the new window, Word can open HTML
 }
 
-function exportR(id,mode){exportDoc(genReportDoc(id),id,mode);}
-function exportQ(id,mode){exportDoc(genQuotDoc(id),id,mode);}
+function exportR(id,mode,orient){exportDoc(genReportDoc(id),id,mode,orient);}
+function exportQ(id,mode,orient){exportDoc(genQuotDoc(id),id,mode,orient);}
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
@@ -2559,7 +2565,8 @@ function viewQ(id){
   <div class="mfoot">
     <button class="btn btn-s" onclick="CM()">Close</button>
     <button class="btn btn-w btn-sm" onclick="exportQ('${q.id}','word')">📄 Word</button>
-    <button class="btn btn-r btn-sm" onclick="exportQ('${q.id}','pdf')">🖨️ PDF Print</button>
+    <button class="btn btn-r btn-sm" onclick="exportQ('${q.id}','pdf','portrait')">🖨️ Portrait</button>
+    <button class="btn btn-r btn-sm" onclick="exportQ('${q.id}','pdf','landscape')">🖨️ Landscape</button>
     ${q.status==='draft'?(CU.role==='finance'||CU.role==='admin')?`<button class="btn btn-w" onclick="CM();openFillRates('${q.id}')">✏️ Fill Rates</button>`+
       (allRates?`<button class="btn btn-p" onclick="CM();openSubmitQ('${q.id}')">📤 Submit to Customer</button>`:''):'':''}
     ${q.status==='submitted'&&(CU.role==='finance'||CU.role==='admin')?`<button class="btn btn-g" onclick="CM();acceptQuot('${q.id}')">✅ Accept</button><button class="btn btn-r" onclick="CM();rejectQuot('${q.id}')">❌ Reject</button>`:''}
@@ -3168,7 +3175,8 @@ function viewInv(id){
   </div>
   <div class="mfoot"><button class="btn btn-s" onclick="CM()">Close</button>
     <button class="btn btn-w btn-sm" onclick="exportInv('${inv.id}','word')">📄 Word</button>
-    <button class="btn btn-r btn-sm" onclick="exportInv('${inv.id}','pdf')">🖨️ PDF Print</button>
+    <button class="btn btn-r btn-sm" onclick="exportInv('${inv.id}','pdf','portrait')">🖨️ Portrait</button>
+    <button class="btn btn-r btn-sm" onclick="exportInv('${inv.id}','pdf','landscape')">🖨️ Landscape</button>
     ${(CU.role==='finance'||CU.role==='admin'||CU.role==='site_incharge')?`<button class="btn btn-s btn-sm" onclick="CM();editInvoice('${inv.id}')">✏️ Edit</button>`:''}
     ${(CU.role==='finance'||CU.role==='admin')&&bal>0?`<button class="btn btn-g" onclick="CM();openAddPayment('${inv.id}')">+ Record Payment</button>`:''}
     ${(CU.role==='admin'||CU.role==='finance'||CU.role==='site_incharge')?`<button class="btn btn-p btn-sm" onclick="CM();genChallan('${inv.id}','invoice')">📦 Generate Challan</button>`:''}
@@ -3709,7 +3717,7 @@ function genInvDoc(id){
   return html;
 }
 
-function exportInv(id,mode){exportDoc(genInvDoc(id),id,mode);}
+function exportInv(id,mode,orient){exportDoc(genInvDoc(id),id,mode,orient);}
 
 // ===== DELIVERY CHALLANS =====
 let _dcItems=[];
@@ -3915,7 +3923,8 @@ function viewChallan(id){
     <button class="btn btn-s" onclick="CM()">Close</button>
     ${CU.role==='admin'||CU.role==='site_incharge'||CU.role==='finance'?`<button class="btn btn-s btn-sm" onclick="CM();editChallan('${c.id}')">✏️ Edit</button>`:''}
     <button class="btn btn-w btn-sm" onclick="exportChallan('${c.id}','word')">📄 Word</button>
-    <button class="btn btn-r btn-sm" onclick="exportChallan('${c.id}','pdf')">🖨️ PDF Print</button>
+    <button class="btn btn-r btn-sm" onclick="exportChallan('${c.id}','pdf','portrait')">🖨️ Portrait</button>
+    <button class="btn btn-r btn-sm" onclick="exportChallan('${c.id}','pdf','landscape')">🖨️ Landscape</button>
     ${(CU.role==='admin'||CU.role==='finance')&&c.linkedRef?(()=>{const db2=rDB();const lq=db2.quotations.find(x=>x.id===c.linkedRef);const li=db2.invoices.find(x=>x.id===c.linkedRef);if(lq&&lq.status!=='invoiced')return`<button class="btn btn-g btn-sm" onclick="CM();genInvoice('${lq.id}')">🧾 Generate Invoice</button>`;if(li)return`<button class="btn btn-g btn-sm" onclick="CM();viewInv('${li.id}')">🧾 View Invoice</button>`;return '';})():''}
     ${(CU.role==='admin'||CU.role==='finance')&&!c.linkedRef?`<button class="btn btn-g btn-sm" onclick="CM();openBlankInv()">🧾 New Invoice</button>`:''}
   </div>`,'wide');
@@ -4139,7 +4148,7 @@ function genChallanDoc(id){
   return html;
 }
 
-function exportChallan(id,mode){exportDoc(genChallanDoc(id),id,mode);}
+function exportChallan(id,mode,orient){exportDoc(genChallanDoc(id),id,mode,orient);}
 </script>
 
 </body></html>
