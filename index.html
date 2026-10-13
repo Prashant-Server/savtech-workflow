@@ -1462,7 +1462,7 @@ function renderREquipTable(){
   </colgroup><tr>
     <th style="text-align:center">#</th><th>Tank No</th><th>Pipeline</th><th>Actuator Type</th><th>Make</th><th>Model No</th><th>Serial No</th><th>Findings</th><th>Health</th><th>🔧 Consumed Spares</th><th>📦 Rec. Spares</th><th>Remarks</th><th></th>
   </tr>${_rEqList.map((eq,i)=>{
-    const mdlOpts=(ATYPE_MODELS[eq.actuatorType]||[]).map(m=>`<option value="${m}">`).join('');
+    const _cm=_getCustomModels(eq.actuatorType);const _allMdl=(ATYPE_MODELS[eq.actuatorType]||[]).slice();_cm.forEach(m=>{if(_allMdl.indexOf(m)<0)_allMdl.push(m);});const mdlOpts=_allMdl.map(m=>`<option value="${m}">`).join('');
     return`<tr>
     <td style="text-align:center;font-weight:600;color:var(--fg2)">${i+1}</td>
     <td><input list="r-tank-dl-${i}" value="${eq.tankNo}" onchange="_rEqList[${i}].tankNo=this.value">
@@ -1476,7 +1476,7 @@ function renderREquipTable(){
       <select id="r-make-sel-${i}" onchange="rEqMake(${i},this.value)">${MAKE_OPTS.map(o=>`<option ${eq.actuatorMake===o?'selected':''}>${o}</option>`).join('')}</select>
       <input id="r-make-oth-${i}" placeholder="Specify make..." style="margin-top:4px;display:${eq.actuatorMake==='Others'?'block':'none'}" value="${eq.actuatorMakeOther||''}" onchange="_rEqList[${i}].actuatorMakeOther=this.value">
     </td>
-    <td><input id="r-mdl-${i}" list="r-mdl-dl-${i}" value="${eq.modelNo}" placeholder="Type or select..." onchange="_rEqList[${i}].modelNo=this.value">
+    <td><input id="r-mdl-${i}" list="r-mdl-dl-${i}" value="${eq.modelNo}" placeholder="Type or select..." onchange="_rEqList[${i}].modelNo=this.value;_saveCustomModel(_rEqList[${i}].actuatorType,this.value)">
       <datalist id="r-mdl-dl-${i}">${mdlOpts}<option value="Others"></datalist></td>
     <td><input value="${eq.serialNo}" onchange="_rEqList[${i}].serialNo=this.value"></td>
     <td><textarea rows="3" onchange="_rEqList[${i}].findings=this.value">${eq.findings}</textarea></td>
@@ -1492,7 +1492,8 @@ function rEqAType(i,val){
   var oi=document.getElementById('r-atype-oth-'+i);
   if(oi)oi.style.display=val==='OTHERS'?'block':'none';
   var dl=document.getElementById('r-mdl-dl-'+i);
-  if(dl)dl.innerHTML=(ATYPE_MODELS[val]||[]).map(function(m){return'<option value="'+m+'">';}).join('')+'<option value="Others">';
+  var _cmm=_getCustomModels(val);var _amm=(ATYPE_MODELS[val]||[]).slice();_cmm.forEach(function(m){if(_amm.indexOf(m)<0)_amm.push(m);});
+  if(dl)dl.innerHTML=_amm.map(function(m){return'<option value="'+m+'">';}).join('')+'<option value="Others">';
   var mi=document.getElementById('r-mdl-'+i);if(mi)mi.value='';_rEqList[i].modelNo='';
   // refresh spares cells when type changes
   var cc=document.getElementById('sp-wrap-c-'+i);if(cc)cc.outerHTML=_spCell(i,'c');
@@ -1529,11 +1530,17 @@ function _syncSpStr(i){
   eq.consumedSpares=(eq.consumedSparesList||[]).map(function(s){return s.name+(s.qty>1?' (×'+s.qty+')':'');}).join(', ');
   eq.recommendedSpares=(eq.recommendedSparesList||[]).map(function(s){return s.name+(s.qty>1?' (×'+s.qty+')':'');}).join(', ');
 }
+function _getCustomSpares(atype){try{var db=rDB();return(db.settings.customSpares||{})[atype]||[];}catch(e){return[];}}
+function _saveCustomSpare(atype,name){try{var db=rDB();if(!db.settings.customSpares)db.settings.customSpares={};if(!db.settings.customSpares[atype])db.settings.customSpares[atype]=[];if(db.settings.customSpares[atype].indexOf(name)<0){db.settings.customSpares[atype].push(name);sDB(db);};}catch(e){}}
+function _getCustomModels(atype){try{var db=rDB();return(db.settings.customModels||{})[atype]||[];}catch(e){return[];}}
+function _saveCustomModel(atype,model){try{var db=rDB();if(!db.settings.customModels)db.settings.customModels={};if(!db.settings.customModels[atype])db.settings.customModels[atype]=[];if(db.settings.customModels[atype].indexOf(model)<0){db.settings.customModels[atype].push(model);sDB(db);};}catch(e){}}
 function openSP(i,field,btn){
   closeSP();
   _SP={i:i,field:field};
   var atype=(_rEqList[i]||{}).actuatorType||'';
-  var opts=SPARES_BY_TYPE[atype]||[];
+  var presets=SPARES_BY_TYPE[atype]||[];
+  var custom=_getCustomSpares(atype);
+  var opts=presets.slice();custom.forEach(function(c){if(opts.indexOf(c)<0)opts.push(c);});
   var existing=(_rEqList[i][field==='c'?'consumedSparesList':'recommendedSparesList']||[]).map(function(s){return s.name;});
   var rows=opts.map(function(name){
     var sel=existing.indexOf(name)>=0;
@@ -1551,7 +1558,7 @@ function openSP(i,field,btn){
   }).join('');
   var panel=document.createElement('div');
   panel.id='sp-panel';
-  panel.style.cssText='position:fixed;z-index:9999;background:var(--card);border:1.5px solid var(--accent);border-radius:12px;padding:16px;width:340px;max-height:460px;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,.28)';
+  panel.style.cssText='position:fixed;z-index:9999;background:#ffffff;border:1.5px solid var(--accent);border-radius:12px;padding:16px;width:340px;max-height:460px;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,.28)';
   panel.innerHTML=
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--accent)">'+
       '<div><div style="font-size:13px;font-weight:700;color:var(--fg)">Select Spares</div>'+
@@ -1603,6 +1610,9 @@ function addSPOther(){
   var list=_rEqList[i][key]||[];
   if(!list.find(function(s){return s.name===name;}))list.push({name:name,qty:qty});
   _rEqList[i][key]=list;_syncSpStr(i);_refreshSPChips();txt.value='';
+  // Save custom spare to DB so it appears in presets next time
+  var atype=(_rEqList[i]||{}).actuatorType||'';
+  _saveCustomSpare(atype,name);
 }
 function _refreshSPChips(){
   if(!_SP)return;
@@ -1621,7 +1631,7 @@ function rEqMake(i,val){
 }
 function addREquip(){_rEqList.push({id:uid(),srNo:_rEqList.length+1,tankNo:'',productLine:'INLET',actuatorType:'EH ROSOV',actuatorMake:'Rotork',modelNo:'',serialNo:'',findings:'',health:'Good',consumedSpares:'',recommendedSpares:'',consumedSparesList:[],recommendedSparesList:[],remarks:'',actuatorTypeOther:'',actuatorMakeOther:''});renderREquipTable();}
 function removeREquip(i){if(_rEqList.length<=1){alert('At least one row required');return;}_rEqList.splice(i,1);renderREquipTable();}
-function updateModelSuggestions(i){var dl=document.getElementById('r-mdl-dl-'+i);var type=_rEqList[i].actuatorType;if(dl)dl.innerHTML=(ATYPE_MODELS[type]||[]).map(function(m){return'<option value="'+m+'">';}).join('')+'<option value="Others">';}
+function updateModelSuggestions(i){var dl=document.getElementById('r-mdl-dl-'+i);var type=_rEqList[i].actuatorType;var all=(ATYPE_MODELS[type]||[]).slice();_getCustomModels(type).forEach(function(m){if(all.indexOf(m)<0)all.push(m);});if(dl)dl.innerHTML=all.map(function(m){return'<option value="'+m+'">';}).join('')+'<option value="Others">';}
 
 function saveReport(editId){
   const db=rDB();
